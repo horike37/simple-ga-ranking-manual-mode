@@ -10,6 +10,16 @@ Domain Path: /languages
 Text Domain:
 */
 
+add_filter( 'sga_ranking_ids', function( $post_ids ) {
+       $option = get_option( 'sga_ranking_options' );
+       if ( empty($option['manual_ranking']) ) {
+               $ranking = $post_ids;
+       } else {
+               $ranking = $option['manual_ranking'];
+               $ranking = array_slice( $ranking, 0, $option['display_count'] );
+       }
+       return $ranking;
+} );
 
 function sga_ranking_get_date_manual( $args = array() ) {
 	$option = get_option( 'sga_ranking_options' );
