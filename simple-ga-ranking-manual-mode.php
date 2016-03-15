@@ -98,7 +98,6 @@ add_action( 'admin_init', function() {
 
 class Simple_GA_Ranking_Manual_Mode {
 	public function __construct() {
-		add_action( 'admin_init', array( $this, 'admin_init' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'admin_enqueue_scripts' ) );
 		add_action( 'wp_ajax_sirp_search_posts', array( $this, 'sirp_search_posts' ) );
 		add_action( 'wp_ajax_sirp_reset_related_posts', array( $this, 'sirp_reset_related_posts' ) );
