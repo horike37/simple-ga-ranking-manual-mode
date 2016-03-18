@@ -1,5 +1,5 @@
 (function($){
-	simpleRelatedPosts = 
+	sgaManualRanking = 
 	{
 		init:function()
 		{
@@ -13,14 +13,14 @@
 		
 		sortable: function()
 		{
-			$( '.sirp_relationship .relationship_right .relationship_list' ).sortable();
+			$( '.sgamanual_relationship .relationship_right .relationship_list' ).sortable();
 		},
 		
 		keyup:function()
 		{
-			$('.sirp_relationship .relationship_left .relationship_search').keyup(function(e){
+			$('.sgamanual_relationship .relationship_left .relationship_search').keyup(function(e){
 				var param = {
-					action: 'sirp_search_posts',
+					action: 'sgamanual_search_posts',
 					s: $(this).val()
 				}
 				$.post(ajaxurl, param, function(ret) {
@@ -37,12 +37,12 @@
 						}
 						title += item.post_title;
 						
-						output += '<li><a class="" data-post_id="'+item.ID+'" href="'+item.permalink+'"><span class="title">'+title+'</span><span class="sirp-button"></span></a></li>' + "\n";
+						output += '<li><a class="" data-post_id="'+item.ID+'" href="'+item.permalink+'"><span class="title">'+title+'</span><span class="sgamanual-button"></span></a></li>' + "\n";
 					});
-					$('.sirp_relationship .relationship_left .relationship_list').html(output);
-					simpleRelatedPosts.add();
-					$('.sirp_relationship .relationship_right .relationship_list li').each(function(index, item) {
-      					$('.sirp_relationship .relationship_left .relationship_list li').each(function(index_2, item_2) {
+					$('.sgamanual_relationship .relationship_left .relationship_list').html(output);
+					sgaManualRanking.add();
+					$('.sgamanual_relationship .relationship_right .relationship_list li').each(function(index, item) {
+      					$('.sgamanual_relationship .relationship_left .relationship_list li').each(function(index_2, item_2) {
       						if($(item).children('a').attr('data-post_id') == $(item_2).children('a').attr('data-post_id')) {
 	      						$(item_2).addClass('hide');
 		  					}
@@ -54,12 +54,12 @@
 		
 		add: function()
 		{
-			$('.sirp_relationship .relationship_left .relationship_list li a').on( 'click', function(e){
+			$('.sgamanual_relationship .relationship_left .relationship_list li a').on( 'click', function(e){
 			 	e.preventDefault();
 			 	
 			 	var post_id = $(this).attr('data-post_id'), flg = true;
 
-      			$('.sirp_relationship .relationship_right .relationship_list li').each(function(index, item) {
+      			$('.sgamanual_relationship .relationship_right .relationship_list li').each(function(index, item) {
       				if ( (index+1) >= sga_ranking_display_num ) {
 	      				alert('よく読まれる記事の上限は %d個です'.replace('%d', sga_ranking_display_num));
 	      				flg = false;
@@ -71,11 +71,11 @@
       			});
 	  			
 	  			if (flg) {
-					$(this).closest('li').clone(false).prependTo('.sirp_relationship .relationship_right .relationship_list').css('background-color', '#EAF2FA').animate({
+					$(this).closest('li').clone(false).prependTo('.sgamanual_relationship .relationship_right .relationship_list').css('background-color', '#EAF2FA').animate({
 						backgroundColor: "#FFFFF",
 					}, 1200);
 					$(this).closest('li').addClass('hide');
-					simpleRelatedPosts.remove();
+					sgaManualRanking.remove();
       			}
 			});
 		},
@@ -83,14 +83,14 @@
 		remove: function()
 		{
 
-			$('.sirp_relationship .relationship_right .relationship_list li a .sirp-button').on( 'click', function(e){
+			$('.sgamanual_relationship .relationship_right .relationship_list li a .sgamanual-button').on( 'click', function(e){
 			 	e.preventDefault();
 			 	$(this).closest('li').fadeOut("slow").queue(function () {
 					$(this).remove();
       			});
       			
       			var post_id = $(this).closest('a').attr('data-post_id');
-      			$('.sirp_relationship .relationship_left .relationship_list li').each(function(index, item) {
+      			$('.sgamanual_relationship .relationship_left .relationship_list li').each(function(index, item) {
       				if($(item).children('a').attr('data-post_id') == post_id) {
 	      				$(item).removeClass('hide');
       				}
@@ -102,7 +102,7 @@
 		submit: function()
 		{
 			$('#sga-post').submit(function(){
-				$('.sirp_relationship .relationship_right .relationship_list li').each(function(index, item) {
+				$('.sgamanual_relationship .relationship_right .relationship_list li').each(function(index, item) {
 					$('<input />').attr('type', 'hidden')
 					.attr('name', 'sga_ranking_options[manual_ranking][]')
 					.attr('value', $(item).children('a').attr('data-post_id'))
@@ -113,9 +113,9 @@
 		
 		reset: function()
 		{
-			$('.sirp_relationship .relationship_right #sirp-reset').on('click', function(e){
+			$('.sgamanual_relationship .relationship_right #sgamanual-reset').on('click', function(e){
 				var param = {
-					action: 'sirp_reset_related_posts'
+					action: 'sgamanual_reset_related_posts'
 				}
 				$.post(ajaxurl, param, function(ret) {
 					if ( ret == '' ) {
@@ -131,14 +131,14 @@
 						}
 						title += item.post_title;
 						
-						output += '<li><a class="" data-post_id="'+item.ID+'" href="'+item.permalink+'"><span class="title">'+title+'</span><span class="sirp-button"></span></a></li>' + "\n";
+						output += '<li><a class="" data-post_id="'+item.ID+'" href="'+item.permalink+'"><span class="title">'+title+'</span><span class="sgamanual-button"></span></a></li>' + "\n";
 					});
-					$('.sirp_relationship .relationship_left .relationship_list').html(output);
-					simpleRelatedPosts.remove();
-					$('.sirp_relationship .relationship_left .relationship_list').css('background-color', '#EAF2FA').animate({
+					$('.sgamanual_relationship .relationship_left .relationship_list').html(output);
+					sgaManualRanking.remove();
+					$('.sgamanual_relationship .relationship_left .relationship_list').css('background-color', '#EAF2FA').animate({
 						backgroundColor: "#FFFFF",
 					}, 1200);
-					simpleRelatedPosts.add();
+					sgaManualRanking.add();
 				},'json');
 			});
 		}
@@ -146,6 +146,6 @@
 	},
 	$(document).ready(function ()	
     {
-        simpleRelatedPosts.init();
+        sgaManualRanking.init();
     })
 })(jQuery);

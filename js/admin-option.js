@@ -3,12 +3,12 @@
 	{
 		init:function()
 		{
-			if ( !$('#sirp_original_css').is(':checked') ) {
-				$("#sirp_original_css_content").css('display', 'none');
+			if ( !$('#sgamanual_original_css').is(':checked') ) {
+				$("#sgamanual_original_css_content").css('display', 'none');
 			}
 
-			$('#sirp_original_css').click(function() {
-				$("#sirp_original_css_content").slideToggle(this.checked);
+			$('#sgamanual_original_css').click(function() {
+				$("#sgamanual_original_css_content").slideToggle(this.checked);
 			});
 		}
 	},

@@ -10,16 +10,19 @@ Domain Path: /languages
 Text Domain:
 */
 
-add_filter( 'sga_ranking_ids', function( $post_ids ) {
-       $option = get_option( 'sga_ranking_options' );
-       if ( empty($option['manual_ranking']) ) {
-               $ranking = $post_ids;
-       } else {
-               $ranking = $option['manual_ranking'];
-               $ranking = array_slice( $ranking, 0, $option['display_count'] );
-       }
-       return $ranking;
-} );
+add_filter( 'sga_ranking_ids', 'sga_manual_ranking' );
+function sga_manual_ranking( $post_ids ) {
+	$option = get_option( 'sga_ranking_options' );
+	if ( empty($option['manual_ranking']) ) {
+		$ranking = $post_ids;
+	} else {
+		$ranking = $option['manual_ranking'];
+		$ranking = array_slice( $ranking, 0, $option['display_count'] );
+	}
+	return $ranking;
+}
+
+
 
 function sga_ranking_get_date_manual( $args = array() ) {
 	$option = get_option( 'sga_ranking_options' );
@@ -38,7 +41,7 @@ function sga_ranking_get_date_manual( $args = array() ) {
 
 function sga_ranking_meta_box() {
 ?>
-<div class="sirp_relationship">
+<div class="sgamanual_relationship">
 	<!-- Left List -->
 	<div class="relationship_left">
 		<table class="widefat">
@@ -59,10 +62,11 @@ function sga_ranking_meta_box() {
 	
 	<!-- Right List -->
 	<div class="relationship_right">
-		<h3><?php _e("ランキングとして表示される記事"); ?><input type="button" id="sirp-reset" class="button-secondary" value="<?php _e('正しいランキングを取得'); ?>" /></h3>
+		<h3><?php _e("ランキングとして表示される記事"); ?><input type="button" id="sgamanual-reset" class="button-secondary" value="<?php _e('正しいランキングを取得'); ?>" /></h3>
 		<ul class="bl relationship_list">
 		<?php
-			$related_posts = sga_ranking_get_date_manual();
+			
+			$related_posts = sga_ranking_get_date();
 			
 			if ( !empty($related_posts) ) {
 				foreach( $related_posts as $post_id ) {
@@ -75,7 +79,7 @@ function sga_ranking_meta_box() {
 					$title .= get_the_title($post_id);
 					
 					echo '<li>
-						<a href="' . get_permalink($post_id) . '" class="" data-post_id="' . $post_id . '"><span class="title">' . $title . '</span><span class="sirp-button"></span></a>
+						<a href="' . get_permalink($post_id) . '" class="" data-post_id="' . $post_id . '"><span class="title">' . $title . '</span><span class="sgamanual-button"></span></a>
 					</li>';					
 				}	
 			}		
@@ -97,12 +101,40 @@ add_action( 'admin_init', function() {
 });
 
 class Simple_GA_Ranking_Manual_Mode {
+	private $cron_key      = 'simple_ga_ranking_manual_mode_reset';
+	private $cron_hook     = 'simple_ga_ranking_manual_mode_reset_action';
+	private $cron_interval = 3*24*60*60;
+	private $cron_title    = 'ランキングの初期化';
+
 	public function __construct() {
 		add_action( 'admin_enqueue_scripts', array( $this, 'admin_enqueue_scripts' ) );
-		add_action( 'wp_ajax_sirp_search_posts', array( $this, 'sirp_search_posts' ) );
-		add_action( 'wp_ajax_sirp_reset_related_posts', array( $this, 'sirp_reset_related_posts' ) );
+		add_action( 'wp_ajax_sgamanual_search_posts', array( $this, 'sgamanual_search_posts' ) );
+		add_action( 'wp_ajax_sgamanual_reset_related_posts', array( $this, 'sgamanual_reset_related_posts' ) );
 		add_action( 'admin_footer', array( $this, 'admin_footer' ) );
 		add_filter( 'sga_ranking_options_validate', array( $this, 'sga_ranking_options_validate' ), 10, 2 );
+		add_filter( 'cron_schedules', array( $this, 'cron_schedules' ) );
+		add_action( $this->cron_hook, array( $this, 'reset_ranking' ) );
+	}
+	
+	public function reset_ranking() {
+		$option = get_option( 'sga_ranking_options' );
+		remove_filter( 'sga_ranking_ids', 'sga_manual_ranking' );
+		$ranking = sga_ranking_get_date();
+		add_filter( 'sga_ranking_ids', 'sga_manual_ranking' );
+		
+		if ( !is_wp_error($ranking) && is_array($option) ) {
+			$option['manual_ranking'] = $ranking;
+			update_option( 'sga_ranking_options', $option );
+		}
+	}
+
+	public function cron_schedules($schedules) {
+		if ( !is_array($schedules) ) {
+			return $schedules;
+		}
+
+		$schedules[$this->cron_key] = array( 'interval' => $this->cron_interval, 'display' => $this->cron_title );
+		return $schedules;
 	}
 	
 	public function sga_ranking_options_validate( $new, $input ) {
@@ -111,6 +143,12 @@ class Simple_GA_Ranking_Manual_Mode {
 				$new['manual_ranking'][$key] = absint( $val );
 			}
 		}
+
+		if ( wp_next_scheduled( $this->cron_hook ) ) {
+			wp_clear_scheduled_hook( $this->cron_hook );
+		}
+		wp_schedule_event( time(), $this->cron_key, $this->cron_hook );
+		spawn_cron( time() );
 
 		return $new;
 	}
@@ -128,12 +166,13 @@ class Simple_GA_Ranking_Manual_Mode {
         wp_enqueue_script( 'sgamanual-color-js' );
     }
     
-    public function sirp_reset_related_posts() {
+    public function sgamanual_reset_related_posts() {
     	if ( !function_exists('sga_ranking_get_date') ) {
     		return;
     	}
-    
+    	remove_filter( 'sga_ranking_ids', 'sga_manual_ranking' );
 	    $results = sga_ranking_get_date();
+	    add_filter( 'sga_ranking_ids', 'sga_manual_ranking' );
 
 		if ( empty($results) ) {
 			return;
@@ -151,7 +190,7 @@ class Simple_GA_Ranking_Manual_Mode {
 		exit;
     }
     
-    public function sirp_search_posts() {
+    public function sgamanual_search_posts() {
     	if ( !isset($_POST['s']) )
     		return;
 		
